@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoadD.Vo Solid Volume Studio</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0f1115; --bg-sidebar: #181a20; --bg-card: #22252b;
+            --border-color: #2a2d35; --text-main: #e2e8f0; --text-muted: #94a3b8;
+            --primary: #10ac84; --primary-hover: #1dd1a1;
+            --danger: #ff4757; --success: #2ed573; --warning: #ffa502; --purple: #9c88ff;
+            --math-bg: rgba(0,0,0,0.3); --header-h: 56px;
+        }
+
+        body.light-theme {
+            --bg-main: #f8fafc; --bg-sidebar: #ffffff; --bg-card: #f1f5f9;
+            --border-color: #cbd5e1; --text-main: #0f172a; --text-muted: #475569;
+            --math-bg: rgba(0,0,0,0.05);
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: var(--bg-main); color: var(--text-main); transition: background-color 0.3s, color 0.3s; display: flex; flex-direction: column; height: 100vh; }
+
+        #top-navbar { height: var(--header-h); background: var(--bg-sidebar); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 24px; z-index: 100; transition: background-color 0.3s; }
+        .nav-brand { font-size: 1.25rem; font-weight: 800; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px; }
+        .nav-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+        .nav-btn { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .nav-btn:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        #app-layout { display: flex; flex: 1; width: 100vw; overflow: hidden; }
+        aside { background: var(--bg-sidebar); display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), background-color 0.3s; position: relative; z-index: 10; overflow: hidden; }
+        #left-sidebar { width: 360px; min-width: 360px; border-right: 1px solid var(--border-color); }
+        #left-sidebar.collapsed { width: 0; min-width: 0; border-right: none; opacity: 0; }
+        #right-sidebar { width: 350px; min-width: 350px; border-left: 1px solid var(--border-color); }
+        #right-sidebar.collapsed { width: 0; min-width: 0; border-left: none; opacity: 0; }
+        .sidebar-inner { width: 100%; min-width: 340px; display: flex; flex-direction: column; height: 100%; }
+
+        #center-view { flex: 1; position: relative; background: var(--bg-main); overflow: hidden; display: flex; justify-content: center; align-items: center; transition: background-color 0.3s; }
+        #canvas-container { width: 100%; height: 100%; display: block; }
+
+        .toggle-btn { position: absolute; top: 20px; z-index: 50; background: var(--bg-sidebar); color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; display: flex; align-items: center; gap: 8px; }
+        .toggle-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        #toggleLeftBtn { left: 20px; } #toggleRightBtn { right: 20px; }
+
+        .floating-controls { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(24, 26, 32, 0.85); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 50px; padding: 10px 24px; display: flex; align-items: center; gap: 20px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.3); color: var(--text-main); transition: background-color 0.3s, box-shadow 0.3s; }
+        body.light-theme .floating-controls { background: rgba(255, 255, 255, 0.85); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .float-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+        .float-divider { width: 1px; height: 24px; background: var(--border-color); }
+        .floating-controls input[type="range"] { width: 150px; margin: 0; cursor: pointer; accent-color: var(--primary); transition: opacity 0.3s; }
+        .floating-controls input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; margin: 0;}
+        .float-btn { background: var(--primary); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .float-btn:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .float-btn.play { background: var(--warning); color: #000; }
+
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-sidebar); position: sticky; top: 0; z-index: 5; transition: background-color 0.3s; }
+        .sidebar-header h3 { margin: 0; font-size: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .sidebar-content { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .config-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-bottom: 16px; transition: transform 0.2s, background-color 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .config-card:hover { border-color: rgba(16, 172, 132, 0.5); }
+        .card-title { font-size: 14px; font-weight: bold; color: var(--primary); margin-bottom: 12px; border-bottom: 1px dashed var(--border-color); padding-bottom: 6px;}
+
+        .input-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .input-row label { width: 90px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        input[type="text"], input[type="number"], select { flex-grow: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-family: 'Fira Code', monospace; font-size: 13px; width: 100%; transition: border-color 0.2s, background-color 0.3s, color 0.3s; }
+        input[type="text"]:focus, input[type="number"]:focus, select:focus { outline: none; border-color: var(--primary); }
+        select { font-family: 'Segoe UI', sans-serif; cursor: pointer; }
+        
+        .bounds-row { display: flex; justify-content: space-between; gap: 12px; }
+        .bounds-row .input-row { width: 48%; margin-bottom: 0; }
+        .bounds-row .input-row label { width: 40px; }
+        input[type="color"] { width: 32px; height: 32px; padding: 0; border: none; border-radius: 6px; cursor: pointer; background: none; }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+        button.action-btn { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button.action-btn.secondary { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); }
+        button.action-btn.secondary:hover { background: var(--border-color); }
+        button.action-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        button.action-btn:active { transform: translateY(0); }
+        button.action-btn.primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); }
+        button.action-btn.graph { background: linear-gradient(135deg, var(--purple) 0%, #8c7ae6 100%); width: 100%; grid-column: span 2; }
+        button.action-btn.latex { background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); }
+
+        .result-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 16px; transition: background-color 0.3s; margin-bottom: 16px;}
+        .result-title { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase;}
+        .math-display { font-size: 16px; margin: 12px 0; color: var(--text-main); padding: 10px; background: var(--math-bg); border-radius: 6px; text-align: center; overflow-x: auto; transition: background-color 0.3s, color 0.3s;}
+        .math-display.vol { border-left: 4px solid var(--primary); }
+        
+        .scratchpad { width: 100%; height: 100px; background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; resize: vertical; font-family: inherit; font-size: 13px; transition: border-color 0.2s, background-color 0.3s, color 0.3s; }
+        .scratchpad:focus { outline: none; border-color: var(--primary); }
+
+        .author-link { color: var(--primary); text-decoration: none; transition: color 0.2s; }
+        .author-link:hover { color: var(--primary-hover); text-decoration: underline; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(8px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 1; transition: opacity 0.3s; }
+        .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+        .modal-content { background: var(--bg-sidebar); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 20px 40px rgba(0,0,0,0.3); display: flex; gap: 24px; color: var(--text-main); transform: scale(1); transition: transform 0.3s; }
+        .modal-overlay.hidden .modal-content { transform: scale(0.95); }
+        .modal-sidebar { width: 280px; display: flex; flex-direction: column; gap: 12px; }
+        .modal-sidebar h4 { margin: 10px 0 5px 0; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .modal-sidebar textarea { background: var(--bg-main); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; height: 100px; resize: none; font-family: 'Fira Code', monospace; font-size: 12px; transition: 0.3s;}
+        #profileCanvas { background: #fff; border-radius: 8px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+        #closeModalBtn { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; margin-top: 10px;}
+        #closeModalBtn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+        
+        #toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--success); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; opacity: 0; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index: 3000; pointer-events: none; box-shadow: 0 10px 20px rgba(46, 213, 115, 0.2); }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <nav id="top-navbar">
+        <div class="nav-brand">NoadD.Vo Solid Volume Studio</div>
+        <div class="nav-actions">
+            <button id="toggleThemeBtn" class="nav-btn" title="Đổi giao diện Sáng / Tối">🌓 Giao diện</button>
+            <button id="saveWorkspaceBtn" class="nav-btn" title="Lưu lại cấu hình hệ thống">💾 Lưu Cấu Hình</button>
+            <input type="file" id="fileInput" accept=".json" style="display:none;">
+        </div>
+    </nav>
+
+    <div id="app-layout">
+        <aside id="left-sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-header">
+                    <h3>Phân Tích & Xuất</h3>
+                </div>
+                <div class="sidebar-content">
+
+                    <div class="btn-group" style="margin-bottom: 24px;">
+                        <button id="downloadLatexFileBtn" class="action-btn secondary" style="grid-column: span 2; background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); color: white; border: none;">📥 Tải File LaTeX (.tex) Mặt Đáy</button>
+                        <button id="exportBtn" class="action-btn primary" style="grid-column: span 2;">📸 Tải Ảnh PNG Khối 3D</button>
+                        <button id="exportManimBtn" class="action-btn" style="grid-column: span 2; background: linear-gradient(135deg, #3776AB 0%, #1f425f 100%);">🐍 Copy Code Manim (3D)</button>
+                        <button id="show2DBtn" class="action-btn graph">📊 Xem Đáy & Copy TikZ 2D</button>
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-title">Kết quả Tính toán</div>
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-bottom: 5px;">HÀM DIỆN TÍCH THIẾT DIỆN $S(t)$:</div>
+                        <div id="formulaArea" class="math-display area"></div>
+                        <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; margin-top: 15px; margin-bottom: 5px;">THỂ TÍCH KHỐI VẬT THỂ (V):</div>
+                        <div id="formulaV" class="math-display vol"></div>
+                    </div>
+
+                    <div class="result-box" style="margin-top: 16px;">
+                        <div class="result-title">📝 Bảng Nháp</div>
+                        <textarea id="scratchpad" class="scratchpad" placeholder="Ghi chú công thức, ý tưởng, lưu ý..."></textarea>
+                    </div>
+
+                    <div class="result-box" style="margin-top: 16px; font-size: 13px; color: var(--text-muted);">
+                        <div class="result-title">👨‍💻 Giới Thiệu Tác Giả</div>
+                        <div style="margin-bottom: 6px;"><strong>Name:</strong> <span style="color: var(--text-main);">NoadD.Vo</span></div>
+                        <div style="margin-bottom: 6px;"><strong>Gmail:</strong> <span style="color: var(--text-main);">dangnguyen402042@gmail.com</span></div>
+                        <div style="margin-bottom: 6px;"><strong>Phone:</strong> <span style="color: var(--text-main);">0975204867</span></div>
+                        <div style="margin-bottom: 6px;"><strong>Facebook:</strong> <a href="https://www.facebook.com/nguyene.vox" target="_blank" class="author-link">nguyene.vox</a></div>
+                        
+                        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                            <span>👁️ Lượt truy cập hôm nay:</span>
+                            <span id="daily-visits" style="background: rgba(16, 172, 132, 0.1); color: var(--primary); padding: 2px 10px; border-radius: 12px; font-weight: bold;">--</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </aside>
+
+        <main id="center-view">
+            <button id="toggleLeftBtn" class="toggle-btn" title="Đóng/Mở Bảng Phân Tích"><span>☰</span> Phân Tích</button>
+            <button id="toggleRightBtn" class="toggle-btn" title="Đóng/Mở Bảng Thiết Lập">Thiết Lập <span>⚙️</span></button>
+            
+            <div class="floating-controls">
+                <button id="playBtn" class="float-btn play" title="Quét mặt cắt">▶</button>
+                
+                <div class="float-item">
+                    <span style="font-size: 12px; color: var(--text-muted);">Mặt cắt:</span>
+                    <input type="range" id="sweepSlider" min="0" max="100" value="100">
+                    <span id="sweepVal" style="width: 40px; display: inline-block; color: var(--primary); font-family: monospace;">100%</span>
+                </div>
+                
+                <div class="float-divider"></div>
+                <div class="float-item">
+                    <label title="Hiển thị toàn bộ khối vật thể" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" id="showFullSolid" checked> 🧊 Khối
+                    </label>
+                </div>
+
+                <div class="float-divider"></div>
+                <div class="float-item">
+                    <label title="Hiển thị lưới tọa độ" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" id="toggleGrid" checked> 🌐 Lưới
+                    </label>
+                </div>
+                <div class="float-item">
+                    <label title="Hiển thị khối dưới dạng khung dây" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        <input type="checkbox" id="toggleWireframe"> 🕸️ Khung
+                    </label>
+                </div>
+                <button class="float-btn" id="resetCamBtn" style="background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);" title="Reset Camera">⟲</button>
+            </div>
+
+            <div id="canvas-container"></div>
+        </main>
+
+        <aside id="right-sidebar">
+            <div class="sidebar-inner">
+                <div class="sidebar-header">
+                    <h3>Toán Học 3D</h3>
+                </div>
+                <div class="sidebar-content">
+                    
+                    <div class="config-card">
+                        <div class="card-title">1. Miền Đáy (Base Region)</div>
+                        
+                        <div class="input-row"><label style="width: 100%;">Trục vuông góc:</label></div>
+                        <select id="orientation" style="margin-bottom: 12px; width: 100%;">
+                            <option value="x">Vuông góc với trục Ox</option>
+                            <option value="y">Vuông góc với trục Oy</option>
+                        </select>
+
+                        <div class="input-row"><label id="lblFuncTop">Đường trên $f(x)$</label><input type="text" id="funcTop" value="sqrt(x)"></div>
+                        <div class="input-row"><label id="lblFuncBot">Đường dưới $g(x)$</label><input type="text" id="funcBot" value="x^2 / 8"></div>
+                        <div class="bounds-row">
+                            <div class="input-row"><label id="lblBoundA">Từ $a$</label><input type="text" id="boundA" value="0"></div>
+                            <div class="input-row"><label id="lblBoundB">Đến $b$</label><input type="text" id="boundB" value="4"></div>
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="card-title">2. Thiết diện (Cross-section)</div>
+                        <select id="shapeType" style="margin-bottom: 12px; width: 100%;">
+                            <option value="square">Hình vuông (Square)</option>
+                            <option value="eq_triangle">Tam giác đều (Equilateral Triangle)</option>
+                            <option value="semicircle">Nửa hình tròn (Semicircle)</option>
+                            <option value="semi_ellipse">Nửa hình elip (b = 1/4 L)</option>
+                            <option value="iso_triangle">Tam giác vuông cân (cạnh huyền ở đáy)</option>
+                            <option value="iso_leg">Tam giác vuông cân (cạnh góc vuông ở đáy)</option>
+                            <option value="rect_2h">Hình chữ nhật (chiều cao = 2 lần đáy)</option>
+                            <option value="rect_half">Hình chữ nhật (chiều cao = 1/2 đáy)</option>
+                            <option value="quarter_circle">Một phần tư hình tròn (Quarter Circle)</option>
+                        </select>
+                        <div class="input-row" style="justify-content: space-between;">
+                            <label style="width:auto;">Màu Vỏ Khối:</label>
+                            <input type="color" id="colorShell" value="#10ac84">
+                        </div>
+                        <div class="input-row" style="justify-content: space-between; margin-bottom: 0;">
+                            <label style="width:auto;">Màu Mặt Cắt:</label>
+                            <input type="color" id="colorSlice" value="#ff9ff3">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <div id="modal2D" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-sidebar">
+                <div class="modal-header">
+                    <h2 style="margin:0; font-size: 18px; color:var(--primary);">Mặt Phẳng Đáy</h2>
+                </div>
+                
+                <h4>Tên trục tọa độ</h4>
+                <div class="bounds-row">
+                    <div class="input-row"><label style="width:40px;">X</label><input type="text" id="gXLabel" value="x"></div>
+                    <div class="input-row"><label style="width:40px;">Y</label><input type="text" id="gYLabel" value="y"></div>
+                </div>
+
+                <h4>Giới hạn trục tọa độ</h4>
+                <div class="bounds-row">
+                    <div class="input-row"><label style="width:40px;">Xmin</label><input type="number" id="gXmin" value="-1" step="0.5"></div>
+                    <div class="input-row"><label style="width:40px;">Xmax</label><input type="number" id="gXmax" value="5" step="0.5"></div>
+                </div>
+                <div class="bounds-row">
+                    <div class="input-row"><label style="width:40px;">Ymin</label><input type="number" id="gYmin" value="-2" step="0.5"></div>
+                    <div class="input-row"><label style="width:40px;">Ymax</label><input type="number" id="gYmax" value="4" step="0.5"></div>
+                </div>
+
+                <h4>Điểm tùy chỉnh</h4>
+                <textarea id="customPoints" spellcheck="false">0, 0, D
+4, 0, A
+2, 0, M
+4, 4, B
+0, 4, C
+2, 2, I
+4, 2, N</textarea>
+                
+                <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+                    <button id="updateGraphBtn" class="action-btn primary">🔄 Cập nhật Đồ thị</button>
+                    <button id="export2DPNGBtn" class="action-btn" style="background: linear-gradient(135deg, #10ac84 0%, #2ecc71 100%); border: none; color: white;">📸 Tải Ảnh PNG (Đáy)</button>
+                    <button id="exportLatex2DBtn" class="action-btn latex">📜 Sao chép mã LaTeX (TikZ)</button>
+                    <button id="closeModalBtn">Đóng Bảng</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <canvas id="profileCanvas" width="500" height="500"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">Thông báo!</div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let isLightTheme = false;
+        let isPlaying = false;
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // Thay đổi label khi đổi hướng thiết diện
+        document.getElementById('orientation').addEventListener('change', (e) => {
+            const isY = e.target.value === 'y';
+            document.getElementById('lblFuncTop').innerHTML = isY ? 'Đường phải $f(y)$' : 'Đường trên $f(x)$';
+            document.getElementById('lblFuncBot').innerHTML = isY ? 'Đường trái $g(y)$' : 'Đường dưới $g(x)$';
+            document.getElementById('lblBoundA').innerHTML = isY ? 'Từ $c$' : 'Từ $a$';
+            document.getElementById('lblBoundB').innerHTML = isY ? 'Đến $d$' : 'Đến $b$';
+            
+            // Auto swap default functions to be smart
+            document.getElementById('funcTop').value = isY ? 'sqrt(y)' : 'sqrt(x)';
+            document.getElementById('funcBot').value = isY ? 'y^2 / 8' : 'x^2 / 8';
+            updateGeometry();
+        });
+
+        document.getElementById('toggleLeftBtn').addEventListener('click', () => { document.getElementById('left-sidebar').classList.toggle('collapsed'); setTimeout(() => window.dispatchEvent(new Event('resize')), 300); });
+        document.getElementById('toggleRightBtn').addEventListener('click', () => { document.getElementById('right-sidebar').classList.toggle('collapsed'); setTimeout(() => window.dispatchEvent(new Event('resize')), 300); });
+
+        // --- KHỞI TẠO 3D ---
+        const centerView = document.getElementById('center-view');
+        const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0f1115);
+        
+        let initWidth = centerView.clientWidth || window.innerWidth - 700;
+        let initHeight = centerView.clientHeight || window.innerHeight;
+
+        const camera = new THREE.PerspectiveCamera(45, initWidth / initHeight, 0.1, 1000); 
+        camera.position.set(8, -8, 8); camera.up.set(0, 0, 1);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true }); 
+        renderer.setSize(initWidth, initHeight); 
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6)); 
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8); dirLight.position.set(5, -5, 10); scene.add(dirLight);
+        
+        const axesHelper = new THREE.AxesHelper(6); scene.add(axesHelper);
+        let gridHelper = new THREE.GridHelper(16, 16, 0x2a2d35, 0x181a20);
+        gridHelper.rotation.x = Math.PI / 2;
+        scene.add(gridHelper);
+        
+        const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+        let solidMesh = null;
+        let sliceMesh = null;
+
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const width = entry.contentRect.width, height = entry.contentRect.height;
+                if(width > 0 && height > 0) { camera.aspect = width / height; camera.updateProjectionMatrix(); renderer.setSize(width, height); }
+            }
+        });
+        resizeObserver.observe(centerView);
+
+        document.getElementById('toggleThemeBtn').addEventListener('click', () => {
+            isLightTheme = !isLightTheme; scene.remove(gridHelper);
+            if (isLightTheme) {
+                document.body.classList.add('light-theme'); scene.background = new THREE.Color(0xf8fafc);
+                gridHelper = new THREE.GridHelper(16, 16, 0xcbd5e1, 0xe2e8f0);
+            } else {
+                document.body.classList.remove('light-theme'); scene.background = new THREE.Color(0x0f1115);
+                gridHelper = new THREE.GridHelper(16, 16, 0x2a2d35, 0x181a20);
+            }
+            gridHelper.rotation.x = Math.PI / 2; gridHelper.visible = document.getElementById('toggleGrid').checked;
+            scene.add(gridHelper); renderer.render(scene, camera); drawProfile2D();
+        });
+
+        document.getElementById('toggleGrid').addEventListener('change', (e) => { gridHelper.visible = e.target.checked; renderer.render(scene, camera); });
+        document.getElementById('toggleWireframe').addEventListener('change', (e) => { if(solidMesh) solidMesh.material.wireframe = e.target.checked; renderer.render(scene, camera); });
+        document.getElementById('showFullSolid').addEventListener('change', updateGeometry);
+        document.getElementById('resetCamBtn').addEventListener('click', () => { camera.position.set(8, -8, 8); controls.target.set(0,0,0); });
+
+        // --- LƯU ---
+        document.getElementById('saveWorkspaceBtn').addEventListener('click', () => {
+            const data = {
+                orientation: document.getElementById('orientation').value,
+                funcTop: document.getElementById('funcTop').value, funcBot: document.getElementById('funcBot').value,
+                boundA: document.getElementById('boundA').value, boundB: document.getElementById('boundB').value,
+                shapeType: document.getElementById('shapeType').value, colorShell: document.getElementById('colorShell').value, colorSlice: document.getElementById('colorSlice').value,
+                sweepSlider: document.getElementById('sweepSlider').value, showFullSolid: document.getElementById('showFullSolid').checked,
+                toggleGrid: document.getElementById('toggleGrid').checked, toggleWireframe: document.getElementById('toggleWireframe').checked,
+                toggleTheme: isLightTheme, customPoints: document.getElementById('customPoints').value,
+                gXLabel: document.getElementById('gXLabel').value, gYLabel: document.getElementById('gYLabel').value,
+                gXmin: document.getElementById('gXmin').value, gXmax: document.getElementById('gXmax').value, gYmin: document.getElementById('gYmin').value, gYmax: document.getElementById('gYmax').value,
+                scratchpad: document.getElementById('scratchpad').value
+            };
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'})); a.download = 'ThietDien_Workspace.json'; a.click();
+            showToast("Đã lưu cấu hình!");
+        });
+
+        // --- TOÁN HỌC & DỰNG HÌNH 3D ---
+        const shapeAreas = {
+            'square': { formula: 'L^2', func: (L) => L * L },
+            'eq_triangle': { formula: '\\frac{\\sqrt{3}}{4} L^2', func: (L) => (Math.sqrt(3)/4) * L * L },
+            'semicircle': { formula: '\\frac{\\pi}{8} L^2', func: (L) => (Math.PI/8) * L * L },
+            'semi_ellipse': { formula: '\\frac{\\pi}{16} L^2', func: (L) => (Math.PI/16) * L * L },
+            'iso_triangle': { formula: '\\frac{1}{4} L^2', func: (L) => 0.25 * L * L },
+            'iso_leg': { formula: '\\frac{1}{2} L^2', func: (L) => 0.5 * L * L },
+            'rect_2h': { formula: '2 L^2', func: (L) => 2 * L * L },
+            'rect_half': { formula: '\\frac{1}{2} L^2', func: (L) => 0.5 * L * L },
+            'quarter_circle': { formula: '\\frac{\\pi}{4} L^2', func: (L) => (Math.PI/4) * L * L }
+        };
+
+        // Hàm tạo hình 2D (u, z) cho thiết diện (với độ dài đáy từ A đến B)
+        function getProfile2D(A, B, shapeType) {
+            const L = Math.abs(B - A);
+            const mid = (A + B) / 2;
+            const pts = [];
+
+            if (shapeType === 'square') {
+                pts.push({u: A, z: 0}, {u: A, z: L}, {u: B, z: L}, {u: B, z: 0});
+            } else if (shapeType === 'eq_triangle') {
+                pts.push({u: A, z: 0}, {u: mid, z: L * Math.sqrt(3)/2}, {u: B, z: 0});
+            } else if (shapeType === 'iso_triangle') {
+                pts.push({u: A, z: 0}, {u: mid, z: L/2}, {u: B, z: 0});
+            } else if (shapeType === 'iso_leg') {
+                pts.push({u: A, z: 0}, {u: B, z: L}, {u: B, z: 0});
+            } else if (shapeType === 'rect_2h') {
+                pts.push({u: A, z: 0}, {u: A, z: 2*L}, {u: B, z: 2*L}, {u: B, z: 0});
+            } else if (shapeType === 'rect_half') {
+                pts.push({u: A, z: 0}, {u: A, z: 0.5*L}, {u: B, z: 0.5*L}, {u: B, z: 0});
+            } else if (shapeType === 'semicircle') {
+                const r = L/2;
+                for(let i=0; i<=20; i++) {
+                    const theta = Math.PI * (i/20);
+                    pts.push({u: mid - r*Math.cos(theta), z: r*Math.sin(theta)});
+                }
+            } else if (shapeType === 'semi_ellipse') {
+                const r = L/2, H = L/4;
+                for(let i=0; i<=20; i++) {
+                    const theta = Math.PI * (i/20);
+                    pts.push({u: mid - r*Math.cos(theta), z: H*Math.sin(theta)});
+                }
+            } else if (shapeType === 'quarter_circle') {
+                for(let i=0; i<=20; i++) {
+                    const theta = (Math.PI/2) * (i/20);
+                    // Tạo một phần tư đường tròn từ A (bên trái) cong lên trên đến B
+                    pts.push({u: A + L*Math.cos(theta), z: L*Math.sin(theta)});
+                }
+            }
+            return pts;
+        }
+
+        // Ánh xạ 2D (u, z) vào không gian 3D tùy theo hướng thiết diện
+        function mapProfileTo3D(pos, A, B, shapeType, orientation) {
+            const pts2D = getProfile2D(A, B, shapeType);
+            return pts2D.map(p => {
+                if (orientation === 'x') return new THREE.Vector3(pos, p.u, p.z);
+                else return new THREE.Vector3(p.u, pos, p.z);
+            });
+        }
+
+        function calculateVolume(fTop, fBot, min, max, shapeType, varName) {
+            const n = 100, h = (max - min) / n; let sum = 0; const areaFunc = shapeAreas[shapeType].func;
+            try {
+                const S = (val) => { 
+                    let top = math.evaluate(fTop, { [varName]: val }), bot = math.evaluate(fBot, { [varName]: val });
+                    if(isNaN(top) || isNaN(bot)) return 0; return areaFunc(Math.abs(top - bot));
+                };
+                sum = S(min) + S(max); for (let i = 1; i < n; i++) sum += S(min + i * h) * (i % 2 === 0 ? 2 : 4);
+                return (sum * h) / 3;
+            } catch (e) { return 0; }
+        }
+
+        function updateGeometry() {
+            if(solidMesh) { scene.remove(solidMesh); solidMesh.geometry.dispose(); solidMesh.material.dispose(); solidMesh = null;}
+            if(sliceMesh) { scene.remove(sliceMesh); sliceMesh.geometry.dispose(); sliceMesh.material.dispose(); sliceMesh = null;}
+
+            const orientation = document.getElementById('orientation').value;
+            const fTopStr = document.getElementById('funcTop').value;
+            const fBotStr = document.getElementById('funcBot').value;
+            const shapeType = document.getElementById('shapeType').value;
+            const colorShell = document.getElementById('colorShell').value;
+            const colorSlice = document.getElementById('colorSlice').value;
+            const sweepPercent = parseFloat(document.getElementById('sweepSlider').value) / 100;
+            const varName = orientation === 'x' ? 'x' : 'y';
+            const varNameInt = orientation === 'x' ? 'dx' : 'dy';
+
+            try {
+                const a = math.evaluate(document.getElementById('boundA').value);
+                const b = math.evaluate(document.getElementById('boundB').value);
+                if (a >= b) return;
+
+                // Cập nhật công thức và kết quả
+                const vol = calculateVolume(fTopStr, fBotStr, a, b, shapeType, varName);
+                let f_labels = orientation === 'x' ? 'f(x)-g(x)' : 'f(y)-g(y)';
+                katex.render(`S(${varName}) = ${shapeAreas[shapeType].formula} \\text{ (với } L = |${f_labels}|)`, document.getElementById('formulaArea'), { throwOnError: false });
+                katex.render(`V = \\int_{${a}}^{${b}} S(${varName}) \\,\\mathrm{d}${varName} \\approx ${vol.toFixed(3)}`, document.getElementById('formulaV'), { throwOnError: false });
+
+                const slicesCount = 100;
+                const currentLimit = a + sweepPercent * (b - a);
+                const solidLimit = document.getElementById('showFullSolid').checked ? b : currentLimit;
+                
+                // Dựng khối Solid
+                if (solidLimit > a) {
+                    const allProfiles = [];
+                    for(let i=0; i<=slicesCount; i++) {
+                        const val = a + i * (solidLimit - a) / slicesCount;
+                        let yT = math.evaluate(fTopStr, { [varName]: val }), yB = math.evaluate(fBotStr, { [varName]: val });
+                        if(isNaN(yT)) yT = 0; if(isNaN(yB)) yB = 0;
+                        allProfiles.push(mapProfileTo3D(val, yB, yT, shapeType, orientation));
+                    }
+
+                    if(allProfiles.length > 1 && allProfiles[0].length > 0) {
+                        const vertices = [], indices = [], ptsPerProfile = allProfiles[0].length;
+                        for(let i=0; i<allProfiles.length; i++) for(let j=0; j<ptsPerProfile; j++) vertices.push(allProfiles[i][j].x, allProfiles[i][j].y, allProfiles[i][j].z);
+                        for(let i=0; i<allProfiles.length - 1; i++) {
+                            for(let j=0; j<ptsPerProfile - 1; j++) {
+                                const current = i * ptsPerProfile + j, next = current + 1, currentUp = (i + 1) * ptsPerProfile + j, nextUp = currentUp + 1;
+                                indices.push(current, next, currentUp); indices.push(next, nextUp, currentUp);
+                            }
+                        }
+                        const geom = new THREE.BufferGeometry(); geom.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3)); geom.setIndex(indices); geom.computeVertexNormals();
+                        solidMesh = new THREE.Mesh(geom, new THREE.MeshPhysicalMaterial({ color: colorShell, transparent: true, opacity: 0.7, side: THREE.DoubleSide, wireframe: document.getElementById('toggleWireframe').checked, roughness: 0.3, metalness: 0.1 }));
+                        scene.add(solidMesh);
+                    }
+                }
+
+                // Luôn dựng mặt phẳng cắt (slice) tại vị trí sweepSlider
+                let sliceYT = math.evaluate(fTopStr, { [varName]: currentLimit });
+                let sliceYB = math.evaluate(fBotStr, { [varName]: currentLimit });
+                if(isNaN(sliceYT)) sliceYT = 0; if(isNaN(sliceYB)) sliceYB = 0;
+                
+                const profile2D = getProfile2D(sliceYB, sliceYT, shapeType);
+                
+                if (profile2D.length > 0) {
+                    const sliceShape = new THREE.Shape();
+                    sliceShape.moveTo(profile2D[0].u, profile2D[0].z);
+                    for(let j=1; j<profile2D.length; j++) sliceShape.lineTo(profile2D[j].u, profile2D[j].z);
+                    
+                    const sliceGeom = new THREE.ShapeGeometry(sliceShape);
+                    // Ánh xạ vertices của ShapeGeometry vào đúng trục
+                    const posAttr = sliceGeom.attributes.position;
+                    for(let i=0; i<posAttr.count; i++) {
+                        let u = posAttr.getX(i);
+                        let z = posAttr.getY(i);
+                        if (orientation === 'x') posAttr.setXYZ(i, 0, u, z);
+                        else posAttr.setXYZ(i, u, 0, z); // z vẫn là chiều cao
+                    }
+                    sliceGeom.computeVertexNormals();
+                    
+                    sliceMesh = new THREE.Mesh(sliceGeom, new THREE.MeshBasicMaterial({ color: colorSlice, side: THREE.DoubleSide }));
+                    sliceMesh.position.set(orientation==='x'?currentLimit:0, orientation==='y'?currentLimit:0, 0);
+                    
+                    // Tạo viền để mặt cắt nổi bật hơn
+                    const edges = new THREE.EdgesGeometry(sliceMesh.geometry);
+                    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 }));
+                    sliceMesh.add(line);
+                    
+                    scene.add(sliceMesh);
+                }
+            } catch(e) {}
+        }
+
+        document.getElementById('right-sidebar').addEventListener('input', updateGeometry);
+        document.getElementById('right-sidebar').addEventListener('change', updateGeometry);
+        document.getElementById('sweepSlider').addEventListener('input', (e) => { document.getElementById('sweepVal').innerText = Math.floor(e.target.value) + "%"; updateGeometry(); });
+
+        // --- ĐỒ THỊ 2D MẶT ĐÁY ---
+        const profileCanvas = document.getElementById('profileCanvas');
+        let draggedPointInfo = null;
+
+        function drawProfile2D() {
+            const ctx = profileCanvas.getContext('2d'); ctx.clearRect(0, 0, profileCanvas.width, profileCanvas.height);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, profileCanvas.width, profileCanvas.height);
+            
+            const minX = parseFloat(document.getElementById('gXmin').value), maxX = parseFloat(document.getElementById('gXmax').value);
+            const minY = parseFloat(document.getElementById('gYmin').value), maxY = parseFloat(document.getElementById('gYmax').value);
+            if(isNaN(minX) || isNaN(maxX) || isNaN(minY) || isNaN(maxY)) return;
+            const scaleX = profileCanvas.width / (maxX - minX), scaleY = profileCanvas.height / (maxY - minY);
+            const toX = (val) => (val - minX) * scaleX, toY = (val) => profileCanvas.height - (val - minY) * scaleY;
+
+            // Lưới và hệ trục
+            ctx.strokeStyle = isLightTheme ? '#e2e8f0' : '#e2e8f0'; ctx.lineWidth = 1;
+            for(let i = Math.floor(minX); i <= Math.ceil(maxX); i++) { ctx.beginPath(); ctx.moveTo(toX(i), 0); ctx.lineTo(toX(i), profileCanvas.height); ctx.stroke(); }
+            for(let i = Math.floor(minY); i <= Math.ceil(maxY); i++) { ctx.beginPath(); ctx.moveTo(0, toY(i)); ctx.lineTo(profileCanvas.width, toY(i)); ctx.stroke(); }
+            
+            ctx.strokeStyle = '#334155'; ctx.fillStyle = '#334155'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(toX(0), profileCanvas.height); ctx.lineTo(toX(0), 30); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(toX(0), 15); ctx.lineTo(toX(0) - 6, 30); ctx.lineTo(toX(0) + 6, 30); ctx.closePath(); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(0, toY(0)); ctx.lineTo(profileCanvas.width - 30, toY(0)); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(profileCanvas.width - 15, toY(0)); ctx.lineTo(profileCanvas.width - 30, toY(0) - 6); ctx.lineTo(profileCanvas.width - 30, toY(0) + 6); ctx.closePath(); ctx.fill();
+
+            const xLabel = document.getElementById('gXLabel').value || 'x', yLabel = document.getElementById('gYLabel').value || 'y';
+            ctx.fillStyle = '#1e293b'; ctx.font = 'italic bold 16px Segoe UI';
+            let xLabelY = Math.max(30, Math.min(toY(0), profileCanvas.height - 20)); ctx.fillText(xLabel, profileCanvas.width - 45, xLabelY - 15);
+            let yLabelX = Math.max(20, Math.min(toX(0), profileCanvas.width - 40)); ctx.fillText(yLabel, yLabelX + 15, 30);
+
+            // Vẽ miền diện tích (thay đổi theo hướng thiết diện)
+            try {
+                const orientation = document.getElementById('orientation').value;
+                const a = math.evaluate(document.getElementById('boundA').value);
+                const b = math.evaluate(document.getElementById('boundB').value);
+                const fTop = document.getElementById('funcTop').value;
+                const fBot = document.getElementById('funcBot').value;
+                const color = document.getElementById('colorShell').value;
+
+                ctx.beginPath();
+                if (orientation === 'x') {
+                    ctx.moveTo(toX(a), toY(math.evaluate(fBot, {x: a})));
+                    for(let x = a; x <= b; x+=0.05) ctx.lineTo(toX(x), toY(math.evaluate(fBot, {x: x})));
+                    for(let x = b; x >= a; x-=0.05) ctx.lineTo(toX(x), toY(math.evaluate(fTop, {x: x})));
+                } else {
+                    ctx.moveTo(toX(math.evaluate(fBot, {y: a})), toY(a));
+                    for(let y = a; y <= b; y+=0.05) ctx.lineTo(toX(math.evaluate(fBot, {y: y})), toY(y));
+                    for(let y = b; y >= a; y-=0.05) ctx.lineTo(toX(math.evaluate(fTop, {y: y})), toY(y));
+                }
+                ctx.closePath();
+                ctx.fillStyle = color + '40'; ctx.fill();
+
+                // Vẽ 2 đường biên
+                ctx.strokeStyle = '#ff4757'; ctx.lineWidth = 2; ctx.beginPath(); // Đường hàm fTop
+                if (orientation === 'x') {
+                    for(let x = a; x <= b; x+=0.05) { let y = math.evaluate(fTop, {x:x}); x===a ? ctx.moveTo(toX(x), toY(y)) : ctx.lineTo(toX(x), toY(y)); }
+                } else {
+                    for(let y = a; y <= b; y+=0.05) { let x = math.evaluate(fTop, {y:y}); y===a ? ctx.moveTo(toX(x), toY(y)) : ctx.lineTo(toX(x), toY(y)); }
+                }
+                ctx.stroke();
+
+                ctx.strokeStyle = '#1e90ff'; ctx.lineWidth = 2; ctx.beginPath(); // Đường hàm fBot
+                if (orientation === 'x') {
+                    for(let x = a; x <= b; x+=0.05) { let y = math.evaluate(fBot, {x:x}); x===a ? ctx.moveTo(toX(x), toY(y)) : ctx.lineTo(toX(x), toY(y)); }
+                } else {
+                    for(let y = a; y <= b; y+=0.05) { let x = math.evaluate(fBot, {y:y}); y===a ? ctx.moveTo(toX(x), toY(y)) : ctx.lineTo(toX(x), toY(y)); }
+                }
+                ctx.stroke();
+            } catch(e) {}
+
+            ctx.fillStyle = '#1e293b'; ctx.font = 'bold 14px Segoe UI';
+            document.getElementById('customPoints').value.split('\n').forEach(line => {
+                const parts = line.split(',');
+                if(parts.length >= 3) {
+                    const x = parseFloat(parts[0].trim()), y = parseFloat(parts[1].trim()), label = parts[2].trim();
+                    if(!isNaN(x) && !isNaN(y)) { ctx.beginPath(); ctx.arc(toX(x), toY(y), 5, 0, Math.PI*2); ctx.fill(); ctx.fillText(label, toX(x) + 8, toY(y) - 8); }
+                }
+            });
+        }
+
+        // Kéo thả điểm 2D
+        function handlePointDrag(e, type) {
+            const rect = profileCanvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX, clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const mouseX = clientX - rect.left, mouseY = clientY - rect.top;
+            const minX = parseFloat(document.getElementById('gXmin').value), maxX = parseFloat(document.getElementById('gXmax').value);
+            const minY = parseFloat(document.getElementById('gYmin').value), maxY = parseFloat(document.getElementById('gYmax').value);
+            const scaleX = profileCanvas.width / (maxX - minX), scaleY = profileCanvas.height / (maxY - minY);
+            const toX = (val) => (val - minX) * scaleX, toY = (val) => profileCanvas.height - (val - minY) * scaleY;
+            const lines = document.getElementById('customPoints').value.split('\n');
+
+            if (type === 'start') {
+                for (let i = 0; i < lines.length; i++) {
+                    const parts = lines[i].split(',');
+                    if (parts.length >= 3) {
+                        const x = parseFloat(parts[0]), y = parseFloat(parts[1]);
+                        if (!isNaN(x) && !isNaN(y) && Math.hypot(toX(x) - mouseX, toY(y) - mouseY) < 15) {
+                            draggedPointInfo = { index: i, label: parts[2].trim() }; profileCanvas.style.cursor = 'grabbing';
+                            if (e.cancelable) e.preventDefault(); break;
+                        }
+                    }
+                }
+            } else if (type === 'move' && draggedPointInfo !== null) {
+                let newX = minX + (mouseX / scaleX), newY = minY + ((profileCanvas.height - mouseY) / scaleY);
+                lines[draggedPointInfo.index] = `${newX.toFixed(2)}, ${newY.toFixed(2)}, ${draggedPointInfo.label}`;
+                document.getElementById('customPoints').value = lines.join('\n'); drawProfile2D();
+                if (e.cancelable) e.preventDefault();
+            } else if (type === 'end') {
+                if (draggedPointInfo) profileCanvas.style.cursor = 'grab'; draggedPointInfo = null;
+            }
+        }
+        profileCanvas.addEventListener('mousedown', (e) => handlePointDrag(e, 'start')); profileCanvas.addEventListener('mousemove', (e) => handlePointDrag(e, 'move')); profileCanvas.addEventListener('mouseup', (e) => handlePointDrag(e, 'end'));
+        profileCanvas.addEventListener('touchstart', (e) => handlePointDrag(e, 'start'), {passive: false}); profileCanvas.addEventListener('touchmove', (e) => handlePointDrag(e, 'move'), {passive: false}); profileCanvas.addEventListener('touchend', (e) => handlePointDrag(e, 'end'));
+
+        document.getElementById('show2DBtn').addEventListener('click', () => { document.getElementById('modal2D').classList.remove('hidden'); drawProfile2D(); });
+        document.getElementById('closeModalBtn').addEventListener('click', () => { document.getElementById('modal2D').classList.add('hidden'); });
+        document.getElementById('updateGraphBtn').addEventListener('click', drawProfile2D);
+
+        // --- XUẤT TÀI NGUYÊN (EXPORT) ---
+        function copyToClipboard(text, msg) { const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(msg); }
+        function formatPGF(s, oldV, newV) { return s.replace(new RegExp(oldV, 'g'), newV); }
+
+        document.getElementById('exportLatex2DBtn').addEventListener('click', () => {
+            const orientation = document.getElementById('orientation').value;
+            const a = document.getElementById('boundA').value, b = document.getElementById('boundB').value;
+            const fT = document.getElementById('funcTop').value.replace(/\^/g, '^').replace(/sqrt/g, '\\sqrt');
+            const fB = document.getElementById('funcBot').value.replace(/\^/g, '^').replace(/sqrt/g, '\\sqrt');
+            const pgfT = formatPGF(document.getElementById('funcTop').value, orientation, 'x');
+            const pgfB = formatPGF(document.getElementById('funcBot').value, orientation, 'x');
+            
+            let tex = `% Mã TikZ 2D (NoadD.Vo Studio)\n\\begin{tikzpicture}\n\\begin{axis}[axis lines = middle, xlabel = {$${document.getElementById('gXLabel').value}$}, ylabel = {$${document.getElementById('gYLabel').value}$}, xmin=${document.getElementById('gXmin').value}, xmax=${document.getElementById('gXmax').value}, ymin=${document.getElementById('gYmin').value}, ymax=${document.getElementById('gYmax').value}, grid = both]\n`;
+            
+            if (orientation === 'x') {
+                tex += `\\addplot [name path=top, domain=${a}:${b}, samples=100, thick, red] {${pgfT}}; % f(x) = ${fT}\n`;
+                tex += `\\addplot [name path=bot, domain=${a}:${b}, samples=100, thick, blue] {${pgfB}}; % g(x) = ${fB}\n`;
+            } else {
+                // Với đồ thị theo trục Oy, ta dùng biến tham số để vẽ trong pgfplots: (f(y), y) nhưng đổi biến thành x cho hàm
+                tex += `\\addplot [name path=top, domain=${a}:${b}, samples=100, thick, red] ({${pgfT}}, {x}); % f(y) = ${fT}\n`;
+                tex += `\\addplot [name path=bot, domain=${a}:${b}, samples=100, thick, blue] ({${pgfB}}, {x}); % g(y) = ${fB}\n`;
+            }
+            tex += `\\addplot [gray!30] fill between[of=top and bot];\n`;
+            
+            document.getElementById('customPoints').value.split('\n').forEach(line => {
+                const parts = line.split(','); if(parts.length >= 3) tex += `\\node[label={45:$${parts[2].trim()}$}, circle, fill, inner sep=1.5pt] at (axis cs: ${parts[0].trim()}, ${parts[1].trim()}) {};\n`;
+            });
+            copyToClipboard(tex + `\\end{axis}\n\\end{tikzpicture}`, "Đã copy TikZ 2D!");
+        });
+
+        document.getElementById('downloadLatexFileBtn').addEventListener('click', () => {
+            document.getElementById('exportLatex2DBtn').click(); // Lấy mã copy mới nhất
+            navigator.clipboard.readText().then(tex => {
+                const content = `\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{pgfplots}\n\\usepgfplotslibrary{fillbetween}\n\\pgfplotsset{compat=1.18}\n\\begin{document}\n\\section*{Mien day (R)}\n\\begin{center}\n${tex}\n\\end{center}\n\\end{document}`;
+                const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], {type: 'text/plain'})); a.download = 'MienDay_LaTeX.tex'; a.click(); showToast("Đã tải File .tex!");
+            });
+        });
+
+        document.getElementById('exportManimBtn').addEventListener('click', () => {
+            const orientation = document.getElementById('orientation').value;
+            const fT = document.getElementById('funcTop').value.replace(/\^/g, '**').replace(/sqrt/g, 'np.sqrt').replace(/sin/g, 'np.sin').replace(/cos/g, 'np.cos');
+            const fB = document.getElementById('funcBot').value.replace(/\^/g, '**').replace(/sqrt/g, 'np.sqrt').replace(/sin/g, 'np.sin').replace(/cos/g, 'np.cos');
+            const pyF_T = formatPGF(fT, orientation, 'v');
+            const pyF_B = formatPGF(fB, orientation, 'v');
+            const a = document.getElementById('boundA').value, b = document.getElementById('boundB').value, shape = document.getElementById('shapeType').value;
+
+            let py = `from manim import *\nimport numpy as np\n\nclass CrossSectionSolid(ThreeDScene):\n    def construct(self):\n        axes = ThreeDAxes()\n        self.set_camera_orientation(phi=60*DEGREES, theta=-45*DEGREES)\n        self.add(axes)\n\n        def f_top(v): return ${pyF_T}\n        def f_bot(v): return ${pyF_B}\n\n        slices = VGroup()\n        for v in np.linspace(${a}, ${b}, 60):\n            L = abs(f_top(v) - f_bot(v))\n            mid = (f_top(v) + f_bot(v))/2\n`;
+            
+            // Xây dựng mảng tọa độ 2D (u, z) cho mặt cắt
+            let ptsLogic = "";
+            if(shape === 'square') ptsLogic = `            pts2d = [(f_bot(v), 0), (f_bot(v), L), (f_top(v), L), (f_top(v), 0)]\n`;
+            else if(shape === 'eq_triangle') ptsLogic = `            pts2d = [(f_bot(v), 0), (mid, L*np.sqrt(3)/2), (f_top(v), 0)]\n`;
+            else if(shape === 'iso_triangle') ptsLogic = `            pts2d = [(f_bot(v), 0), (mid, L/2), (f_top(v), 0)]\n`;
+            else if(shape === 'iso_leg') ptsLogic = `            pts2d = [(f_bot(v), 0), (f_top(v), L), (f_top(v), 0)]\n`;
+            else if(shape === 'rect_2h') ptsLogic = `            pts2d = [(f_bot(v), 0), (f_bot(v), 2*L), (f_top(v), 2*L), (f_top(v), 0)]\n`;
+            else if(shape === 'rect_half') ptsLogic = `            pts2d = [(f_bot(v), 0), (f_bot(v), 0.5*L), (f_top(v), 0.5*L), (f_top(v), 0)]\n`;
+            else if(shape === 'quarter_circle') {
+                ptsLogic = `            pts2d = [(f_bot(v) + L*np.cos(theta), L*np.sin(theta)) for theta in np.linspace(0, np.pi/2, 20)]\n`;
+            } else if(shape === 'semicircle') {
+                ptsLogic = `            pts2d = [(mid - (L/2)*np.cos(theta), (L/2)*np.sin(theta)) for theta in np.linspace(0, np.pi, 20)]\n`;
+            } else if(shape === 'semi_ellipse') {
+                ptsLogic = `            pts2d = [(mid - (L/2)*np.cos(theta), (L/4)*np.sin(theta)) for theta in np.linspace(0, np.pi, 20)]\n`;
+            }
+            py += ptsLogic;
+
+            // Ánh xạ sang 3D dựa vào hướng thiết diện
+            if (orientation === 'x') {
+                py += `            pts3d = [axes.c2p(v, pt[0], pt[1]) for pt in pts2d]\n`;
+            } else {
+                py += `            pts3d = [axes.c2p(pt[0], v, pt[1]) for pt in pts2d]\n`;
+            }
+
+            py += `            slices.add(Polygon(*pts3d, fill_opacity=0.7, fill_color=BLUE, stroke_width=0.5))\n        self.play(Create(slices), run_time=3)\n        self.begin_ambient_camera_rotation(rate=0.1)\n        self.wait(3)\n`;
+            copyToClipboard(py, "Đã copy mã Python (Manim)!");
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const oldBg = scene.background; scene.background = null; renderer.render(scene, camera);
+            const a = document.createElement('a'); a.download = 'ThietDien_3D.png'; a.href = renderer.domElement.toDataURL(); a.click();
+            scene.background = oldBg; renderer.render(scene, camera); showToast("Đã tải ảnh 3D!");
+        });
+        document.getElementById('export2DPNGBtn').addEventListener('click', () => {
+            const a = document.createElement('a'); a.download = 'MienDay_2D.png'; a.href = document.getElementById('profileCanvas').toDataURL(); a.click(); showToast("Đã tải ảnh 2D!");
+        });
+
+        // --- BỘ ĐẾM TRUY CẬP ---
+        function initVisitorCounter() {
+            const today = new Date().toISOString().slice(0, 10);
+            let visits = localStorage.getItem('noadd_td_visits_' + today);
+            if (!visits) {
+                visits = Math.floor(Math.random() * 50) + 12; 
+            } else {
+                visits = parseInt(visits, 10);
+            }
+            visits++;
+            localStorage.setItem('noadd_td_visits_' + today, visits);
+            const visitEl = document.getElementById('daily-visits');
+            if(visitEl) visitEl.innerText = visits;
+        }
+        initVisitorCounter();
+
+        // --- VÒNG LẶP ANIMATION ---
+        document.getElementById('playBtn').addEventListener('click', (e) => {
+            isPlaying = !isPlaying; e.target.innerText = isPlaying ? "⏸" : "▶";
+            e.target.style.background = isPlaying ? "var(--warning)" : "var(--primary)";
+            e.target.style.color = isPlaying ? "#000" : "#fff";
+        });
+
+        setTimeout(updateGeometry, 500); 
+        function animate() {
+            requestAnimationFrame(animate);
+            if (isPlaying) {
+                let s = parseFloat(document.getElementById('sweepSlider').value) + 0.5; 
+                if (s > 100) s = 0;
+                document.getElementById('sweepSlider').value = s; 
+                document.getElementById('sweepVal').innerText = Math.floor(s) + "%"; 
+                updateGeometry();
+            }
+            controls.update(); renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
